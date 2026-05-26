@@ -1,0 +1,73 @@
+// ==========================================
+// MediLang DSL - Syntax Guide & Examples
+// ==========================================
+// Note: 
+//   - Keywords must be in ALL CAPS.
+//   - Statements must end with a semicolon (;).
+//   - Single-line comments start with //.
+//   - Strings are enclosed in double quotes (e.g. "John Doe").
+//   - Identifiers (Patient IDs) start with a letter and can contain letters, numbers, and underscores (e.g. P001).
+
+// 1. REGISTER PATIENT
+// Purpose: Adds a new patient to the system.
+// Syntax:  REGISTER PATIENT <id> "<name>" AGE <integer> ;
+// Example:
+REGISTER PATIENT P001 "John Doe" AGE 45 ;
+REGISTER PATIENT p_1002 "Alice Smith" AGE 29 ;
+
+// 2. PRESCRIBE MEDICINE
+// Purpose: Adds a prescription to a registered patient.
+// Syntax:  PRESCRIBE <id> MEDICINE "<medicine>" DOSAGE "<dosage>" ;
+// Example:
+PRESCRIBE P001 MEDICINE "Paracetamol" DOSAGE "500mg twice a day" ;
+PRESCRIBE p_1002 MEDICINE "Amoxicillin" DOSAGE "250mg every 8 hours" ;
+
+// 3. RECORD DIAGNOSIS
+// Purpose: Adds a medical diagnosis note to a registered patient's record.
+// Syntax:  RECORD <id> DIAGNOSIS "<diagnosis text>" ;
+// Example:
+RECORD P001 DIAGNOSIS "Mild seasonal allergies" ;
+RECORD p_1002 DIAGNOSIS "Bacterial infection" ;
+
+// 4. VALIDATE PATIENT
+// Purpose: Prints out the complete medical record and history for a patient.
+// Syntax:  VALIDATE <id> ;
+// Example:
+VALIDATE P001 ;
+VALIDATE p_1002 ;
+
+
+// ==========================================
+// Complete Flow Example
+// ==========================================
+REGISTER PATIENT PatientX "Jane Doe" AGE 34 ;
+RECORD PatientX DIAGNOSIS "Sprained ankle" ;
+PRESCRIBE PatientX MEDICINE "Ibuprofen" DOSAGE "400mg as needed for pain" ;
+VALIDATE PatientX ;
+
+
+// ==========================================
+// How the Grammar is Made (Under the Hood)
+// ==========================================
+// The syntax rules above are enforced strictly by the Bison parser (medilang.y) 
+// and Flex lexer (medilang.l) operating in tandem.
+//
+// 1. Lexical Analysis (Flex | medilang.l)
+//    Flex breaks raw text into actionable "tokens". It identifies:
+//      - Keywords: REGISTER, PATIENT, AGE, PRESCRIBE, etc.
+//      - Identifiers: Evaluates regex `[A-Za-z][A-Za-z0-9_]*` 
+//      - Strings: Evaluates regex `\"([^\"\n])*\"` (text inside quotes)
+//      - Integers: Evaluates regex `[0-9]+`
+//      - Terminals: Consumes spaces, newlines, and `//` comments silently.
+//
+// 2. Syntax Parsing (Bison | medilang.y)
+//    Bison reads the tokens and matches them against rigid sentence structures:
+//
+//    * register_stmt : KW_REGISTER KW_PATIENT IDENTIFIER STRING KW_AGE INTEGER ';'
+//    * prescribe_stmt: KW_PRESCRIBE IDENTIFIER KW_MEDICINE STRING KW_DOSAGE STRING ';'
+//    * record_stmt   : KW_RECORD IDENTIFIER KW_DIAGNOSIS STRING ';'
+//    * validate_stmt : KW_VALIDATE IDENTIFIER ';'
+//
+//    If the sequence of tokens does not exactly match one of these structures
+//    (for example, missing the final ';' or forgetting the age), Bison halts the 
+//    statement, throws a Syntax Error, and tries to recover at the next line.
